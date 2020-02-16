@@ -20,11 +20,24 @@ package com.github.KathyBekh.Classes
 fun main() {
     val testVal = DimensionalValue("1 g")
     val testThree = DimensionalValue("3.0 g")
-    val testTwoV = DimensionalValue(2.0, "m")
+    val testTwoV = DimensionalValue(5.0, "m")
+    val testFour = DimensionalValue(3.0, "g")
     println(testThree)
     println(testThree.plus(testVal))
-//    println(testVal.minus(testThree))
+    println(testVal.minus(testThree))
     println(testTwoV.unaryMinus())
+    println(testTwoV.times(3.0))
+    println(testTwoV.times(3.0).div(5.0))
+    println(testVal.div(testThree))
+    println(testVal.equals(testTwoV))
+    println(testThree.equals("3.0 g"))
+    println(testThree.equals(3.0))
+    println(testThree.equals(testThree))
+    println(testThree.equals(testFour))
+    println(testFour.compareTo(testThree))
+    println(testVal.compareTo(testThree))
+    println(testFour.compareTo(testVal))
+
 }
 
 class DimensionalValue  {
@@ -87,32 +100,64 @@ class DimensionalValue  {
     /**
      * Вычитание другой величины. Если базовая размерность разная, бросить IllegalArgumentException
      */
-    operator fun minus(other: DimensionalValue): DimensionalValue = TODO()
+    operator fun minus(other: DimensionalValue): DimensionalValue {
+        if (dimension != other.dimension) {
+        throw IllegalArgumentException()
+    }
+        val minusValue =  value - other.value
+        return DimensionalValue(minusValue, dimension)
+    }
 
     /**
      * Умножение на число
      */
-    operator fun times(other: Double): DimensionalValue = TODO()
+    operator fun times(other: Double): DimensionalValue {
+        val multipliedValue = value * other
+        return DimensionalValue(multipliedValue, dimension)
+    }
 
     /**
      * Деление на число
      */
-    operator fun div(other: Double): DimensionalValue = TODO()
+    operator fun div(other: Double): DimensionalValue {
+        val valueDivided = value / other
+        return DimensionalValue(valueDivided, dimension)
+    }
 
     /**
      * Деление на другую величину. Если базовая размерность разная, бросить IllegalArgumentException
      */
-    operator fun div(other: DimensionalValue): Double = TODO()
+    operator fun div(other: DimensionalValue): Double {
+        if (dimension != other.dimension) {
+            throw IllegalArgumentException()
+        }
+        return value / other.value
+
+    }
 
     /**
      * Сравнение на равенство
      */
-    override fun equals(other: Any?): Boolean = TODO()
+    override fun equals(other: Any?): Boolean =
+        if (other is DimensionalValue) {
+            other.dimension == dimension && other.value == value
+        } else {
+            false
+        }
 
     /**
      * Сравнение на больше/меньше. Если базовая размерность разная, бросить IllegalArgumentException
      */
-//    override fun compareTo(other: DimensionalValue): Int = TODO()
+    fun compareTo(other: DimensionalValue): Int {
+        if (dimension != other.dimension) {
+            throw IllegalArgumentException()
+        }
+        return when {
+            other.value == value -> 0
+            other.value > value-> 1
+            else -> -1
+        }
+    }
 }
 
 /**
