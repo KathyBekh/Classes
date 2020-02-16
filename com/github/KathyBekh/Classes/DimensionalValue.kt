@@ -16,32 +16,73 @@ package com.github.KathyBekh.Classes
  * - либо соответствовать одной из приставок, к которой приписана сама размерность (Km, Kg, mm, mg)
  * - во всех остальных случаях следует бросить IllegalArgumentException
  */
-class DimensionalValue(value: Double, dimension: String) : Comparable<DimensionalValue> {
+
+fun main() {
+    val testVal = DimensionalValue("1 g")
+    val testThree = DimensionalValue("3.0 g")
+    val testTwoV = DimensionalValue(2.0, "m")
+    println(testThree)
+    println(testThree.plus(testVal))
+//    println(testVal.minus(testThree))
+    println(testTwoV.unaryMinus())
+}
+
+class DimensionalValue  {
     /**
      * Величина с БАЗОВОЙ размерностью (например для 1.0Kg следует вернуть результат в граммах -- 1000.0)
      */
-    val value: Double get() = TODO()
+    private val value: Double
+//        get() = field * 1000
 
     /**
      * БАЗОВАЯ размерность (опять-таки для 1.0Kg следует вернуть GRAM)
      */
-    val dimension: Dimension get() = TODO()
+    val dimension: Dimension
+//        get() = field
+
+    constructor(value: Double, dimension: Dimension) {
+        this.value = value
+        this.dimension = dimension
+    }
+
+    constructor(value: Double, abbreviation: String) {
+        this.value = value
+        this.dimension = fromAbbreviation(abbreviation)
+    }
 
     /**
      * Конструктор из строки. Формат строки: значение пробел размерность (1 Kg, 3 mm, 100 g и так далее).
      */
-    constructor(s: String) : this(TODO(), TODO())
+    constructor(s: String) {
+        val (v, dimension) = s.split(" ")
+        value = v.toDouble()
+        this.dimension = fromAbbreviation(dimension)
+    }
+
+    override fun toString(): String {
+        return "value: $value dimension: $dimension"
+    }
 
     /**
      * Сложение с другой величиной. Если базовая размерность разная, бросить IllegalArgumentException
      * (нельзя складывать метры и килограммы)
      */
-    operator fun plus(other: DimensionalValue): DimensionalValue = TODO()
+    operator fun plus(other: DimensionalValue): DimensionalValue {
+        val sumValue =  value + other.value
+        if (dimension != other.dimension) {
+            throw IllegalArgumentException()
+        }
+        return DimensionalValue(sumValue, dimension)
+    }
 
     /**
      * Смена знака величины
      */
-    operator fun unaryMinus(): DimensionalValue = TODO()
+    operator fun unaryMinus(): DimensionalValue {
+        val minusVal = -value
+        val dim = dimension
+        return DimensionalValue(minusVal, dim)
+    }
 
     /**
      * Вычитание другой величины. Если базовая размерность разная, бросить IllegalArgumentException
@@ -71,7 +112,7 @@ class DimensionalValue(value: Double, dimension: String) : Comparable<Dimensiona
     /**
      * Сравнение на больше/меньше. Если базовая размерность разная, бросить IllegalArgumentException
      */
-    override fun compareTo(other: DimensionalValue): Int = TODO()
+//    override fun compareTo(other: DimensionalValue): Int = TODO()
 }
 
 /**
@@ -80,6 +121,15 @@ class DimensionalValue(value: Double, dimension: String) : Comparable<Dimensiona
 enum class Dimension(val abbreviation: String) {
     METER("m"),
     GRAM("g");
+}
+
+fun fromAbbreviation(abbreviation: String) : Dimension {
+    for (d in Dimension.values()) {
+        if (d.abbreviation == abbreviation) {
+            return d
+        }
+    }
+    throw IllegalArgumentException()
 }
 
 /**
