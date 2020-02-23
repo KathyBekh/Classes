@@ -19,9 +19,10 @@ package com.github.KathyBekh.Classes
 
 fun main() {
     val testVal = DimensionalValue("1 g")
-    val testThree = DimensionalValue("3.0 g")
+    val testThree = DimensionalValue("3.0 Kg")
     val testTwoV = DimensionalValue(5.0, "m")
     val testFour = DimensionalValue(3.0, "g")
+    println(DimensionalValue("2 g"))
     println(testThree)
     println(testThree.plus(testVal))
     println(testVal.minus(testThree))
@@ -40,11 +41,11 @@ fun main() {
 
 }
 
-class DimensionalValue  {
+class DimensionalValue {
     /**
      * Величина с БАЗОВОЙ размерностью (например для 1.0Kg следует вернуть результат в граммах -- 1000.0)
      */
-    private val value: Double
+    val value: Double
 //        get() = field * 1000
 
     /**
@@ -59,17 +60,19 @@ class DimensionalValue  {
     }
 
     constructor(value: Double, abbreviation: String) {
-        this.value = value
-        this.dimension = fromAbbreviation(abbreviation)
+        val dimensionalValue = DimensionPrefix.toDimensionalValue(abbreviation);
+        this.value = value * dimensionalValue.value
+        this.dimension = dimensionalValue.dimension
     }
 
     /**
      * Конструктор из строки. Формат строки: значение пробел размерность (1 Kg, 3 mm, 100 g и так далее).
      */
-    constructor(s: String) {
-        val (v, dimension) = s.split(" ")
-        value = v.toDouble()
-        this.dimension = fromAbbreviation(dimension)
+    constructor(amountWithPrefixedDimension: String) {
+        val (value, prefixedDimension) = amountWithPrefixedDimension.split(" ")
+        val dimensionalValue = DimensionPrefix.toDimensionalValue(prefixedDimension);
+        this.value = value.toDouble() * dimensionalValue.value
+        this.dimension = dimensionalValue.dimension
     }
 
     override fun toString(): String {
@@ -81,9 +84,9 @@ class DimensionalValue  {
      * (нельзя складывать метры и килограммы)
      */
     operator fun plus(other: DimensionalValue): DimensionalValue {
-        val sumValue =  value + other.value
+        val sumValue = value + other.value
         if (dimension != other.dimension) {
-            throw IllegalArgumentException()
+            throw IllegalArgumentException() as Throwable
         }
         return DimensionalValue(sumValue, dimension)
     }
@@ -102,9 +105,9 @@ class DimensionalValue  {
      */
     operator fun minus(other: DimensionalValue): DimensionalValue {
         if (dimension != other.dimension) {
-        throw IllegalArgumentException()
-    }
-        val minusValue =  value - other.value
+            throw IllegalArgumentException()
+        }
+        val minusValue = value - other.value
         return DimensionalValue(minusValue, dimension)
     }
 
@@ -148,15 +151,21 @@ class DimensionalValue  {
     /**
      * Сравнение на больше/меньше. Если базовая размерность разная, бросить IllegalArgumentException
      */
-    fun compareTo(other: DimensionalValue): Int {
+    operator fun compareTo(other: DimensionalValue): Int {
         if (dimension != other.dimension) {
             throw IllegalArgumentException()
         }
         return when {
-            other.value == value -> 0
-            other.value > value-> 1
+            value == other.value -> 0
+            value > other.value -> 1
             else -> -1
         }
+    }
+
+    override fun hashCode(): Int {
+        var result = value.hashCode()
+        result = 31 * result + dimension.hashCode()
+        return result
     }
 }
 
@@ -166,15 +175,17 @@ class DimensionalValue  {
 enum class Dimension(val abbreviation: String) {
     METER("m"),
     GRAM("g");
-}
 
-fun fromAbbreviation(abbreviation: String) : Dimension {
-    for (d in Dimension.values()) {
-        if (d.abbreviation == abbreviation) {
-            return d
+    companion object {
+        fun fromAbbreviation(abbreviation: String): Dimension {
+            for (dimension in Dimension.values()) {
+                if (dimension.abbreviation == abbreviation) {
+                    return dimension
+                }
+            }
+            throw IllegalArgumentException()
         }
     }
-    throw IllegalArgumentException()
 }
 
 /**
@@ -183,4 +194,25 @@ fun fromAbbreviation(abbreviation: String) : Dimension {
 enum class DimensionPrefix(val abbreviation: String, val multiplier: Double) {
     KILO("K", 1000.0),
     MILLI("m", 0.001);
+
+    companion object {
+        fun toDimensionalValue(prefixedAbbreviation: String): DimensionalValue {
+            if (prefixedAbbreviation.length != 1) {
+                for (prefix in DimensionPrefix.values()) {
+                    for (dimension in Dimension.values()) {
+                        if (prefix.abbreviation == prefixedAbbreviation[0].toString()
+                            && dimension.abbreviation == prefixedAbbreviation[1].toString()
+                        ) {
+                            return DimensionalValue(
+                                prefix.multiplier,
+                                Dimension.fromAbbreviation(dimension.abbreviation)
+                            )
+                        }
+                    }
+                }
+            }
+            return DimensionalValue(1.0, Dimension.fromAbbreviation(prefixedAbbreviation))
+        }
+    }
 }
+
